@@ -53,8 +53,12 @@ names(brent_prices) <- c("Date", "USD_Barrel")
 plot_ly(data = brent_prices,
         x = ~Date,
         y = ~USD_Barrel,
-        type = 'scatter',
-        mode = 'lines')
+        type = "scatter",
+        mode = "lines") %>%
+  layout(title = "Europe Brent Spot Price FOB",
+         xaxis = list(title = ""),
+         yaxis = list(title = "Price (USD/Barrel)")
+  )
 ```
 
 
