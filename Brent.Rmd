@@ -1,0 +1,60 @@
+---
+title: "Data Exploration: Europe Brent Spot Price FOB"
+author: "Enrique Pérez Herrero"
+date: "January 9, 2017"
+output: 
+  html_document: 
+    highlight: tango
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+---
+
+# SUMMARY
+
+
+# LOAD DATA
+
+## LOAD PACKAGES
+
+```{r setup, message=FALSE}
+library(readxl)
+library(plotly)
+```
+
+## DATA URL AND FILE PATH
+
+```{r}
+data_url <- "https://www.eia.gov/dnav/pet/hist_xls/RBRTEd.xls"
+data_file <- basename(data_url)
+data_dir <- "data"
+data_path <- paste(data_dir, data_file, sep = "/")
+```
+
+## DOWNLOAD EXCEL
+
+```{r}
+if(!file.exists(data_path)) {
+  download.file(data_url, destfile = data_path, method = "wget")
+}
+```
+
+## READ DATA
+
+```{r}
+brent_prices <- read_excel(data_path, sheet = "Data 1", skip = 2)
+brent_prices <- na.omit(brent_prices)
+names(brent_prices) <- c("Date", "USD_Barrel")
+```
+
+# PLOT PRICES
+
+```{r}
+plot_ly(data = brent_prices,
+        x = ~Date,
+        y = ~USD_Barrel,
+        type = 'scatter',
+        mode = 'lines')
+```
+
+
