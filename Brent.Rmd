@@ -12,17 +12,19 @@ output:
 
 # SUMMARY
 
+Europe Brent Spot Price FOB (Dollars per Barrel) [https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D)
+
 
 # LOAD DATA
 
-## LOAD PACKAGES
+## Load Packages
 
 ```{r setup, message=FALSE}
 library(readxl)
 library(plotly)
 ```
 
-## DATA URL AND FILE PATH
+## Data URL and file path
 
 ```{r}
 data_url <- "https://www.eia.gov/dnav/pet/hist_xls/RBRTEd.xls"
@@ -31,7 +33,7 @@ data_dir <- "data"
 data_path <- paste(data_dir, data_file, sep = "/")
 ```
 
-## DOWNLOAD EXCEL
+## Download EXCEL with data
 
 ```{r}
 if(!file.exists(data_path)) {
@@ -39,7 +41,7 @@ if(!file.exists(data_path)) {
 }
 ```
 
-## READ DATA
+## Read Data
 
 ```{r}
 brent_prices <- read_excel(data_path, sheet = "Data 1", skip = 2)
@@ -47,7 +49,16 @@ brent_prices <- na.omit(brent_prices)
 names(brent_prices) <- c("Date", "USD_Barrel")
 ```
 
+# SUMMARY
+
+```{r}
+summary(brent_prices)
+```
+
+
 # PLOT PRICES
+
+## Prices plot
 
 ```{r}
 plot_ly(data = brent_prices,
@@ -58,7 +69,30 @@ plot_ly(data = brent_prices,
   layout(title = "Europe Brent Spot Price FOB",
          xaxis = list(title = ""),
          yaxis = list(title = "Price (USD/Barrel)")
+         )
+```
+
+
+## Prices Histogram
+
+```{r}
+plot_ly(data = brent_prices,
+        x = ~USD_Barrel,
+        type = "histogram") %>%
+  layout(title = "Daily Prices Histogram",
+         xaxis = list(title = "Price (USD/Barrel)")
   )
 ```
 
 
+# LINKS
+
+* [4-Plot](http://www.itl.nist.gov/div898/handbook/eda/section3/4plot.htm)  
+* [R in Time Series: Autocorrelation in R](http://quantlego.com/howto/autocorrelation-in-r/)
+* [Forecasting Brent Oil](https://rstudio-pubs-static.s3.amazonaws.com/71505_b67043c08a5f48c2b5797fab525401cb.html)
+* [Oil Series in R](http://kukuruku.co/hub/r/oil-series-oil-prices-in-r)
+* [Plotting Forecast Objects](https://plot.ly/r/graphing-multiple-chart-types/#plotting-forecast-objects)
+* [CRAN Task View: Time Series Analysis](https://cran.r-project.org/web/views/TimeSeries.html)
+* [Forecasting the Price of Oil
+Ron Alquist, Lutz Kilian, and Robert J. Vigfusson](https://www.federalreserve.gov/pubs/ifdp/2011/1022/ifdp1022.pdf)
+* [Forecasting Model for Crude Oil Price Using Artificial Neural Networks and Commodity Futures Prices](https://arxiv.org/abs/0906.4838)

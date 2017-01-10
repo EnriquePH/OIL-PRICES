@@ -27,14 +27,15 @@ names(brent_prices) <- c("Date", "USD_Barrel")
 View(brent_prices)
 
 
-#ggplot(brent_prices, aes(x = Date, y = USD_Barrel)) +
-#  geom_line()
+ggplot(brent_prices, aes(x = Date, y = USD_Barrel)) +
+  geom_line()
 
 
-plot_ly(data = brent_prices,
-        x = ~Date,
-        y = ~USD_Barrel,
-        type = 'scatter',
-        mode = 'lines')
+xx <- xts(brent_prices$USD_Barrel, brent_prices$Date)
 
+plot(xx)
+
+xx2 <- ts(apply.monthly(xx, mean), start = c(1987),   frequency = 12)
+
+plot(decompose(xx2, type="multiplicative"))
 
