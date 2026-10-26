@@ -57,3 +57,19 @@ table <- c(
           fmt(fc_df$`Lo 95`), fmt(fc_df$`Hi 95`))
 )
 replace_block(table, "forecast")
+
+
+# Badges in README.md (shields.io static badges: "-" is written as "--")
+badge <- function(label, message, color, link) {
+  esc <- function(x) utils::URLencode(gsub("-", "--", x), reserved = TRUE)
+  sprintf("[![%s](https://img.shields.io/badge/%s-%s-%s)](%s)",
+          label, esc(label), esc(message), color, link)
+}
+replace_block(c(
+  badge("data until", format(end(daily)), "informational",
+        "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D"),
+  badge("model", as.character(fit), "blueviolet", "#key-results"),
+  badge(paste("forecast", fc_df$Month[1]),
+        paste(fmt(fc_df$`Point Forecast`[1]), "USD/bbl"), "orange",
+        "output/brent_forecast.csv")
+), "badges")

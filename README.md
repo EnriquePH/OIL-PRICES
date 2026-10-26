@@ -1,7 +1,18 @@
 # OIL-PRICES — Brent price forecasting
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Weekly forecast](https://github.com/EnriquePH/OIL-PRICES/actions/workflows/weekly-forecast.yml/badge.svg)](https://github.com/EnriquePH/OIL-PRICES/actions/workflows/weekly-forecast.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![R](https://img.shields.io/badge/R-%3E%3D%204.0-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
+[![forecast](https://img.shields.io/badge/package-forecast-276DC3)](https://pkg.robjhyndman.com/forecast/)
+[![Data: EIA](https://img.shields.io/badge/data-EIA-2E8B57)](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D)
+[![Last commit](https://img.shields.io/github/last-commit/EnriquePH/OIL-PRICES)](https://github.com/EnriquePH/OIL-PRICES/commits/main)
+[![Repo size](https://img.shields.io/github/repo-size/EnriquePH/OIL-PRICES)](https://github.com/EnriquePH/OIL-PRICES)
+
+<!-- badges:start -->
+[![data until](https://img.shields.io/badge/data%20until-2026--10--20-informational)](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D)
+[![model](https://img.shields.io/badge/model-ARIMA%281%2C1%2C2%29-blueviolet)](#key-results)
+[![forecast 2026-10](https://img.shields.io/badge/forecast%202026--10-120.5%20USD%2Fbbl-orange)](output/brent_forecast.csv)
+<!-- badges:end -->
 
 Monthly forecast of the **Europe Brent Spot Price FOB** (USD/barrel) with ARIMA models in R,
 using the daily series published by the
