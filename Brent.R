@@ -1,0 +1,38 @@
+# Europe Brent Spot Price FOB (Dollars per Barrel)
+# https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D
+#
+# ARIMA forecast of the monthly mean price for the next `h` months.
+# Usage: Rscript Brent.R [h]
+# Output: output/brent_forecast.csv and output/brent_forecast.png
+
+
+library(forecast)
+library(ggplot2)
+source("R/brent.R")
+
+
+args <- commandArgs(trailingOnly = TRUE)
+h <- if (length(args) > 0) as.integer(args[1]) else 12
+
+download_brent()
+brent <- monthly_brent(read_brent())
+
+fit <- auto.arima(brent, lambda = 0, biasadj = TRUE,
+                  stepwise = FALSE, approximation = FALSE)
+brent_fc <- forecast(fit, h = h)
+
+print(fit)
+print(brent_fc)
+
+dir.create("output", showWarnings = FALSE)
+
+fc_df <- data.frame(Month = format(as.Date(zoo::as.yearmon(time(brent_fc$mean))), "%Y-%m"),
+                    as.data.frame(brent_fc), row.names = NULL, check.names = FALSE)
+write.csv(fc_df, "output/brent_forecast.csv", row.names = FALSE)
+
+p <- autoplot(window(brent, start = end(brent)[1] - 8)) +
+  autolayer(brent_fc, series = "ARIMA") +
+  labs(title = paste("Brent forecast:", as.character(fit)),
+       x = "", y = "USD/Barrel") +
+  theme(legend.position = "none")
+ggsave("output/brent_forecast.png", p, width = 9, height = 5)

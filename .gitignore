@@ -1,5 +1,15 @@
+# RStudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# Borradores y material antiguo (fuera de git)
 /draft
+
+# Resultados de Brent.R (se regeneran)
+/output
+
+# knitr
+*_cache/
+*_files/

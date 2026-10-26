@@ -1,67 +1,70 @@
 ---
-title: "Data Exploration: Europe Brent Spot Price FOB"
+title: "Time Series Forecasting: Europe Brent Spot Price FOB"
 author: "Enrique Pérez Herrero"
-date: "January 9, 2017"
-output: 
-  html_document: 
+date: "January 9, 2017 (updated `r format(Sys.Date(), '%B %d, %Y')`)"
+output:
+  html_document:
     highlight: tango
     number_sections: yes
     theme: cosmo
     toc: yes
 ---
 
+```{r options, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 9)
+set.seed(1987)
+```
+
 # SUMMARY
 
 Europe Brent Spot Price FOB (Dollars per Barrel) [https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D)
+
+Monthly mean prices are modelled with ARIMA and ETS on the log scale and
+compared with the random walk (naive) forecast, the usual benchmark for oil
+prices (Alquist, Kilian and Vigfusson, 2011), on a 24 month test set and with
+rolling origin cross-validation. The ARIMA model selected with all the data
+gives the forecast for the next 12 months.
 
 
 # LOAD DATA
 
 ## Load Packages
 
-```{r setup, message=FALSE}
-library(readxl)
+```{r setup}
 library(plotly)
+library(forecast)
+library(tseries)
+library(ggplot2)
+source("R/brent.R")
 ```
 
-## Data URL and file path
+## Download and Read Data
+
+The EIA Excel file is downloaded again if the local copy is older than a week.
 
 ```{r}
-data_url <- "https://www.eia.gov/dnav/pet/hist_xls/RBRTEd.xls"
-data_file <- basename(data_url)
-data_dir <- "data"
-data_path <- paste(data_dir, data_file, sep = "/")
+download_brent()
+brent_daily <- read_brent()
+brent <- monthly_brent(brent_daily)
 ```
 
-## Download EXCEL with data
+Daily data from `r start(brent_daily)` to `r end(brent_daily)`
+(`r nrow(brent_daily)` observations), `r length(brent)` complete months.
 
 ```{r}
-if(!file.exists(data_path)) {
-  download.file(data_url, destfile = data_path, method = "wget")
-}
-```
-
-## Read Data
-
-```{r}
-brent_prices <- read_excel(data_path, sheet = "Data 1", skip = 2)
-brent_prices <- na.omit(brent_prices)
-names(brent_prices) <- c("Date", "USD_Barrel")
-```
-
-# SUMMARY
-
-```{r}
-summary(brent_prices)
+summary(brent_daily)
 ```
 
 
-# PLOT PRICES
+# EXPLORATORY ANALYSIS
 
-## Prices plot
+## Daily Prices
 
 ```{r}
-plot_ly(data = brent_prices,
+brent_df <- data.frame(Date = index(brent_daily),
+                       USD_Barrel = as.numeric(brent_daily))
+
+plot_ly(data = brent_df,
         x = ~Date,
         y = ~USD_Barrel,
         type = "scatter",
@@ -72,11 +75,10 @@ plot_ly(data = brent_prices,
          )
 ```
 
-
 ## Prices Histogram
 
 ```{r}
-plot_ly(data = brent_prices,
+plot_ly(data = brent_df,
         x = ~USD_Barrel,
         type = "histogram") %>%
   layout(title = "Daily Prices Histogram",
@@ -84,10 +86,188 @@ plot_ly(data = brent_prices,
   )
 ```
 
+## Monthly Prices
+
+```{r}
+autoplot(brent) +
+  labs(title = "Brent monthly mean price", x = "", y = "USD/Barrel")
+```
+
+## STL Decomposition
+
+Variance grows with the price level, so the decomposition is done on `log(price)`.
+
+```{r}
+autoplot(stl(log(brent), s.window = "periodic", robust = TRUE)) +
+  labs(title = "STL decomposition of log(price)")
+```
+
+The seasonal component is very small compared with the trend and the remainder.
+
+
+# STATIONARITY
+
+Augmented Dickey-Fuller (H0: unit root) and KPSS (H0: stationary) tests on the
+log prices and on the monthly log returns.
+
+```{r}
+log_brent <- log(brent)
+returns <- diff(log_brent)
+
+stationarity <- function(x) {
+  c(ADF_p = adf.test(x)$p.value, KPSS_p = kpss.test(x)$p.value)
+}
+
+round(rbind(`log(price)` = stationarity(log_brent),
+            `diff(log(price))` = stationarity(returns)), 3)
+
+ndiffs(log_brent)
+nsdiffs(log_brent)
+```
+
+Log prices have a unit root; one difference makes the series stationary.
+
+```{r}
+autoplot(returns) +
+  labs(title = "Monthly log returns", x = "", y = "diff(log(price))")
+```
+
+## ACF and PACF of Returns
+
+```{r}
+ggtsdisplay(returns, main = "Monthly log returns")
+```
+
+
+# MODELS
+
+## Train and Test Sets
+
+The last 24 months are kept as test set.
+
+```{r}
+h_test <- 24
+train <- head(brent, length(brent) - h_test)
+test <- tail(brent, h_test)
+```
+
+## Fit Models
+
+All models are fitted on the log scale (`lambda = 0`) and back-transformed
+with bias adjustment.
+
+```{r}
+fit_arima <- auto.arima(train, lambda = 0, biasadj = TRUE,
+                        stepwise = FALSE, approximation = FALSE)
+fit_ets <- ets(train, lambda = 0, biasadj = TRUE)
+fit_arima
+fit_ets
+
+fc <- list(
+  Naive = rwf(train, h = h_test, lambda = 0, biasadj = TRUE),
+  Drift = rwf(train, h = h_test, drift = TRUE, lambda = 0, biasadj = TRUE),
+  ETS = forecast(fit_ets, h = h_test),
+  ARIMA = forecast(fit_arima, h = h_test)
+)
+```
+
+## Test Set Accuracy
+
+```{r}
+test_accuracy <- t(sapply(fc, function(f) accuracy(f, test)["Test set", ]))
+knitr::kable(test_accuracy[, c("RMSE", "MAE", "MAPE", "MASE")], digits = 3)
+```
+
+```{r}
+autoplot(window(brent, start = time(test)[1] - 4)) +
+  autolayer(fc$Naive, series = "Naive", PI = FALSE) +
+  autolayer(fc$Drift, series = "Drift", PI = FALSE) +
+  autolayer(fc$ETS, series = "ETS", PI = FALSE) +
+  autolayer(fc$ARIMA, series = "ARIMA", PI = FALSE) +
+  labs(title = "Forecasts on the test set", x = "", y = "USD/Barrel",
+       colour = "Model")
+```
+
+## Time Series Cross-Validation
+
+A single test set depends a lot on what happened in those 24 months. Rolling
+origin evaluation since 2005 compares ARIMA (with the order chosen above) and
+the naive forecast for horizons of 1 to 12 months.
+
+```{r}
+h_cv <- 12
+order <- arimaorder(fit_arima)
+seasonal <- if (length(order) > 3) order[4:6] else c(0, 0, 0)
+arima_cv <- function(y, h) {
+  forecast(Arima(y, order = order[1:3], seasonal = seasonal,
+                 include.drift = "drift" %in% names(coef(fit_arima)),
+                 lambda = 0, biasadj = TRUE), h = h)
+}
+naive_cv <- function(y, h) rwf(y, h = h, lambda = 0, biasadj = TRUE)
+
+initial <- sum(time(brent) < 2005)
+e_arima <- tsCV(brent, arima_cv, h = h_cv, initial = initial)
+e_naive <- tsCV(brent, naive_cv, h = h_cv, initial = initial)
+
+cv_rmse <- data.frame(
+  h = 1:h_cv,
+  ARIMA = sqrt(colMeans(e_arima^2, na.rm = TRUE)),
+  Naive = sqrt(colMeans(e_naive^2, na.rm = TRUE))
+)
+knitr::kable(cv_rmse, digits = 2, row.names = FALSE)
+```
+
+```{r}
+ggplot(cv_rmse, aes(x = h)) +
+  geom_line(aes(y = ARIMA, colour = "ARIMA")) +
+  geom_line(aes(y = Naive, colour = "Naive")) +
+  labs(title = "Cross-validated RMSE by horizon", x = "Horizon (months)",
+       y = "RMSE (USD/Barrel)", colour = "Model")
+```
+
+
+# FORECAST
+
+## Final Model
+
+The ARIMA model is selected again with all the data.
+
+```{r}
+fit <- auto.arima(brent, lambda = 0, biasadj = TRUE,
+                  stepwise = FALSE, approximation = FALSE)
+fit
+```
+
+## Residuals
+
+```{r}
+checkresiduals(fit)
+```
+
+## Next 12 Months
+
+```{r}
+brent_fc <- forecast(fit, h = 12)
+
+autoplot(window(brent, start = end(brent)[1] - 8)) +
+  autolayer(brent_fc, series = "ARIMA") +
+  labs(title = paste("Brent forecast:", as.character(fit)),
+       x = "", y = "USD/Barrel") +
+  theme(legend.position = "none")
+
+knitr::kable(as.data.frame(brent_fc), digits = 2)
+```
+
+The 95 % interval is wide: as with most financial series, the monthly
+returns are close to white noise and the point forecast stays near the
+last price. Cross-validation shows how much (or how little) ARIMA improves
+on the random walk.
+
 
 # LINKS
 
-* [4-Plot](http://www.itl.nist.gov/div898/handbook/eda/section3/4plot.htm)  
+* [4-Plot](http://www.itl.nist.gov/div898/handbook/eda/section3/4plot.htm)
+* [Forecasting: Principles and Practice (2nd ed.)](https://otexts.com/fpp2/)
 * [R in Time Series: Autocorrelation in R](http://quantlego.com/howto/autocorrelation-in-r/)
 * [Forecasting Brent Oil](https://rstudio-pubs-static.s3.amazonaws.com/71505_b67043c08a5f48c2b5797fab525401cb.html)
 * [Oil Series in R](http://kukuruku.co/hub/r/oil-series-oil-prices-in-r)
