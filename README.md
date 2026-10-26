@@ -1,5 +1,7 @@
 # OIL-PRICES — Brent price forecasting
 
+[![Weekly forecast](https://github.com/EnriquePH/OIL-PRICES/actions/workflows/weekly-forecast.yml/badge.svg)](https://github.com/EnriquePH/OIL-PRICES/actions/workflows/weekly-forecast.yml)
+
 Time series forecasting of the **Europe Brent Spot Price FOB** (USD/barrel) with ARIMA,
 using the daily data published by the [EIA](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D)
 since 1987, aggregated to monthly means.
@@ -9,7 +11,7 @@ since 1987, aggregated to monthly means.
 | File | Description |
 | --- | --- |
 | `Brent.Rmd` | Full report (renders to `Brent.html`, not tracked): exploration, STL decomposition, ADF/KPSS tests, ACF/PACF, Naive / Drift / ETS / ARIMA models, test set (last 24 months), rolling cross-validation, residual checks and 12 month forecast. |
-| `Brent.R` | Script: fits ARIMA with all the data and saves the forecast to `output/brent_forecast.csv` and `output/brent_forecast.png`. |
+| `Brent.R` | Script: fits ARIMA with all the data and saves the forecast to [`output/brent_forecast.csv`](output/brent_forecast.csv) and `output/brent_forecast.png`. |
 | `plots/` | Report figures, written by `Brent.Rmd`. |
 | `R/brent.R` | Shared functions: download, read and monthly aggregation. |
 | `data/RBRTEd.xls` | EIA data. Downloaded again automatically when older than 7 days. |
@@ -32,6 +34,13 @@ The EIA file is downloaded again automatically when the local copy is older than
 (`--update` forces it). The EIA publishes the daily series weekly, with a delay of about
 one week, so the latest data point is usually 5–10 days old. Only complete months are
 modelled: the current month is dropped until it is (almost) finished.
+
+## Weekly update (GitHub Actions)
+
+[`.github/workflows/weekly-forecast.yml`](.github/workflows/weekly-forecast.yml) runs every
+Sunday at 06:00 UTC (and manually from the *Actions* tab): downloads the latest EIA data,
+runs `Brent.R` and renders `Brent.Rmd`, and commits `data/`, `plots/` and `output/` when they
+change. The rendered `Brent.html` is attached to each run as an artifact.
 
 ## Plots
 

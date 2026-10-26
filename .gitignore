@@ -7,9 +7,6 @@
 # Borradores y material antiguo (fuera de git)
 /draft
 
-# Resultados de Brent.R (se regeneran)
-/output
-
 # Informe HTML (se regenera con rmarkdown::render)
 /Brent.html
 
