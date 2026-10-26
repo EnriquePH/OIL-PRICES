@@ -52,3 +52,15 @@ monthly_brent <- function(daily) {
      start = c(as.numeric(format(first, "%Y")), as.numeric(format(first, "%m"))),
      frequency = 12)
 }
+
+
+# Replace the lines between <!-- name:start --> and <!-- name:end --> in a
+# Markdown file (used to update README.md with the latest results)
+replace_block <- function(lines, name, path = "README.md") {
+  md <- readLines(path, encoding = "UTF-8")
+  start <- grep(sprintf("<!-- %s:start -->", name), md, fixed = TRUE)
+  end <- grep(sprintf("<!-- %s:end -->", name), md, fixed = TRUE)
+  if (length(start) != 1 || length(end) != 1) return(invisible(FALSE))
+  writeLines(c(md[1:start], lines, md[end:length(md)]), path, useBytes = TRUE)
+  invisible(TRUE)
+}
