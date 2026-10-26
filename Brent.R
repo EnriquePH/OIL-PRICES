@@ -18,8 +18,9 @@ args <- setdiff(args, "--update")
 h <- if (length(args) > 0) as.integer(args[1]) else 12
 
 download_brent(max_age_days = if (update) 0 else 7)
-cat("Data until", format(end(read_brent())), "\n")
-brent <- monthly_brent(read_brent())
+daily <- read_brent()
+cat("Data until", format(end(daily)), "\n")
+brent <- monthly_brent(daily)
 
 fit <- auto.arima(brent, lambda = 0, biasadj = TRUE,
                   stepwise = FALSE, approximation = FALSE)
@@ -40,3 +41,25 @@ p <- autoplot(window(brent, start = end(brent)[1] - 8)) +
        x = "", y = "USD/Barrel") +
   theme(legend.position = "none")
 ggsave("output/brent_forecast.png", p, width = 9, height = 5)
+
+
+# Forecast table in README.md, between the forecast:start and forecast:end marks
+fmt <- function(x) formatC(x, format = "f", digits = 1)
+table <- c(
+  sprintf("Model **%s** on log(price). Data until **%s** (last price %s USD), updated %s.",
+          as.character(fit), format(end(daily)), fmt(as.numeric(last(daily))),
+          format(Sys.Date())),
+  "",
+  "| Month | Forecast | 80 % interval | 95 % interval |",
+  "| --- | ---: | :---: | :---: |",
+  sprintf("| %s | %s | %s – %s | %s – %s |", fc_df$Month,
+          fmt(fc_df$`Point Forecast`), fmt(fc_df$`Lo 80`), fmt(fc_df$`Hi 80`),
+          fmt(fc_df$`Lo 95`), fmt(fc_df$`Hi 95`))
+)
+readme <- readLines("README.md")
+start <- grep("<!-- forecast:start -->", readme, fixed = TRUE)
+end <- grep("<!-- forecast:end -->", readme, fixed = TRUE)
+if (length(start) == 1 && length(end) == 1) {
+  readme <- c(readme[1:start], table, readme[end:length(readme)])
+  writeLines(readme, "README.md")
+}
