@@ -10,6 +10,9 @@
 # Resultados de Brent.R (se regeneran)
 /output
 
+# Informe HTML (se regenera con rmarkdown::render)
+/Brent.html
+
 # knitr
 *_cache/
 *_files/

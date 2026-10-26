@@ -2,19 +2,23 @@
 # https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=rbrte&f=D
 #
 # ARIMA forecast of the monthly mean price for the next `h` months.
-# Usage: Rscript Brent.R [h]
+# Usage: Rscript Brent.R [h] [--update]
+#   --update  download the EIA data now (by default only when older than 7 days)
 # Output: output/brent_forecast.csv and output/brent_forecast.png
 
 
-library(forecast)
+suppressPackageStartupMessages(library(forecast))
 library(ggplot2)
 source("R/brent.R")
 
 
 args <- commandArgs(trailingOnly = TRUE)
+update <- "--update" %in% args
+args <- setdiff(args, "--update")
 h <- if (length(args) > 0) as.integer(args[1]) else 12
 
-download_brent()
+download_brent(max_age_days = if (update) 0 else 7)
+cat("Data until", format(end(read_brent())), "\n")
 brent <- monthly_brent(read_brent())
 
 fit <- auto.arima(brent, lambda = 0, biasadj = TRUE,

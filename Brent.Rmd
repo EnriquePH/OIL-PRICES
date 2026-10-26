@@ -11,7 +11,8 @@ output:
 ---
 
 ```{r options, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 9)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 9,
+                      fig.path = "plots/", dpi = 96)
 set.seed(1987)
 ```
 
@@ -88,7 +89,7 @@ plot_ly(data = brent_df,
 
 ## Monthly Prices
 
-```{r}
+```{r monthly-prices}
 autoplot(brent) +
   labs(title = "Brent monthly mean price", x = "", y = "USD/Barrel")
 ```
@@ -97,7 +98,7 @@ autoplot(brent) +
 
 Variance grows with the price level, so the decomposition is done on `log(price)`.
 
-```{r}
+```{r stl-decomposition}
 autoplot(stl(log(brent), s.window = "periodic", robust = TRUE)) +
   labs(title = "STL decomposition of log(price)")
 ```
@@ -127,14 +128,14 @@ nsdiffs(log_brent)
 
 Log prices have a unit root; one difference makes the series stationary.
 
-```{r}
+```{r log-returns}
 autoplot(returns) +
   labs(title = "Monthly log returns", x = "", y = "diff(log(price))")
 ```
 
 ## ACF and PACF of Returns
 
-```{r}
+```{r acf-pacf}
 ggtsdisplay(returns, main = "Monthly log returns")
 ```
 
@@ -178,7 +179,7 @@ test_accuracy <- t(sapply(fc, function(f) accuracy(f, test)["Test set", ]))
 knitr::kable(test_accuracy[, c("RMSE", "MAE", "MAPE", "MASE")], digits = 3)
 ```
 
-```{r}
+```{r test-forecasts}
 autoplot(window(brent, start = time(test)[1] - 4)) +
   autolayer(fc$Naive, series = "Naive", PI = FALSE) +
   autolayer(fc$Drift, series = "Drift", PI = FALSE) +
@@ -217,7 +218,7 @@ cv_rmse <- data.frame(
 knitr::kable(cv_rmse, digits = 2, row.names = FALSE)
 ```
 
-```{r}
+```{r cv-rmse}
 ggplot(cv_rmse, aes(x = h)) +
   geom_line(aes(y = ARIMA, colour = "ARIMA")) +
   geom_line(aes(y = Naive, colour = "Naive")) +
@@ -240,13 +241,13 @@ fit
 
 ## Residuals
 
-```{r}
+```{r residuals}
 checkresiduals(fit)
 ```
 
 ## Next 12 Months
 
-```{r}
+```{r forecast}
 brent_fc <- forecast(fit, h = 12)
 
 autoplot(window(brent, start = end(brent)[1] - 8)) +
