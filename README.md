@@ -166,7 +166,12 @@ Rscript Brent.R            # 12 month forecast (updates output/ and the table ab
 Rscript Brent.R 24         # 24 month forecast
 Rscript Brent.R --update   # download the latest EIA data first
 Rscript -e "rmarkdown::render('Brent.Rmd')"   # full report: Brent.html, plots/, key results
+make app                   # web app on http://127.0.0.1:8322
 ```
+
+The web app downloads the EIA prices (button **Bajar cotizaciones de la EIA**), fits the same model and shows the
+forecast with its 80 % and 95 % intervals for 3 to 36 months. It listens only on this computer. `make help` lists the
+common targets (`setup`, `lint`, `test`, `build`…).
 
 The EIA file is downloaded again automatically when the local copy is older than 7 days.
 The EIA publishes the daily series weekly, about one week behind, so the latest data point

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "OIL-PRICES: Brent price forecasting"
+abstract: "Monthly forecast of the Europe Brent spot price (EIA, USD per barrel) with ARIMA models in R, updated weekly."
+type: software
+authors:
+  - family-names: "Pérez Herrero"
+    given-names: "Enrique"
+    email: eph.project1500@gmail.com
+repository-code: "https://github.com/EnriquePH/OIL-PRICES"
+url: "https://github.com/EnriquePH/OIL-PRICES"
+license: MIT
+keywords:
+  - brent
+  - oil
+  - forecast
+  - arima
+  - r

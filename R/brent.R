@@ -17,11 +17,14 @@ data_path <- file.path("data", basename(data_url))
 download_brent <- function(path = data_path, max_age_days = 7) {
   fresh <- file.exists(path) &&
     difftime(Sys.time(), file.mtime(path), units = "days") < max_age_days
-  if (fresh) return(invisible(path))
+  if (fresh) {
+    return(invisible(path))
+  }
   dir.create(dirname(path), showWarnings = FALSE)
   tmp <- tempfile(fileext = ".xls")
   ok <- tryCatch(download.file(data_url, tmp, mode = "wb", quiet = TRUE) == 0,
-                 error = function(e) FALSE, warning = function(w) FALSE)
+    error = function(e) FALSE, warning = function(w) FALSE
+  )
   if (ok) {
     file.copy(tmp, path, overwrite = TRUE)
   } else if (!file.exists(path)) {
@@ -38,7 +41,9 @@ read_brent <- function(path = data_path) {
   brent <- read_excel(path, sheet = "Data 1", skip = 2)
   brent <- na.omit(brent)
   names(brent) <- c("Date", "USD_Barrel")
-  xts(brent$USD_Barrel, as.Date(brent$Date), dimnames = list(NULL, "USD_Barrel"))
+  xts(brent$USD_Barrel, as.Date(brent$Date),
+    dimnames = list(NULL, "USD_Barrel")
+  )
 }
 
 
@@ -49,8 +54,9 @@ monthly_brent <- function(daily) {
   if (last_day < 25) monthly <- monthly[-nrow(monthly)]
   first <- start(monthly)
   ts(as.numeric(monthly),
-     start = c(as.numeric(format(first, "%Y")), as.numeric(format(first, "%m"))),
-     frequency = 12)
+    start = c(as.numeric(format(first, "%Y")), as.numeric(format(first, "%m"))),
+    frequency = 12
+  )
 }
 
 
@@ -60,7 +66,9 @@ replace_block <- function(lines, name, path = "README.md") {
   md <- readLines(path, encoding = "UTF-8")
   start <- grep(sprintf("<!-- %s:start -->", name), md, fixed = TRUE)
   end <- grep(sprintf("<!-- %s:end -->", name), md, fixed = TRUE)
-  if (length(start) != 1 || length(end) != 1) return(invisible(FALSE))
+  if (length(start) != 1 || length(end) != 1) {
+    return(invisible(FALSE))
+  }
   writeLines(c(md[1:start], lines, md[end:length(md)]), path, useBytes = TRUE)
   invisible(TRUE)
 }
