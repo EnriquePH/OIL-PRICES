@@ -92,3 +92,6 @@ rsconnect/
 # knitr
 *_cache/
 *_files/
+
+# material antiguo, fuera del repositorio (HD750, 2026-11-18)
+old/
